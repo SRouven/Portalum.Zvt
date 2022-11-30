@@ -44,7 +44,9 @@ namespace Portalum.Zvt.Parsers
                 new TlvInfo { Tag = "1F10", Description = "Cardholder authentication", TryProcess = this.SetCardholderAuthentication },
                 new TlvInfo { Tag = "1F12", Description = "Card technology", TryProcess = this.SetCardTechnology },
                 new TlvInfo { Tag = "60", Description = "Application", TryProcess = null },
-                new TlvInfo { Tag = "1F2B", Description = "Trace number (long format)", TryProcess = this.SetTraceNumberLongFormat }
+                new TlvInfo { Tag = "1F2B", Description = "Trace number (long format)", TryProcess = this.SetTraceNumberLongFormat },
+                new TlvInfo { Tag = "1F16", Description = "extended error code", TryProcess = SetExtendedErrorCode},
+                new TlvInfo { Tag = "1F17", Description = "extended error text", TryProcess = SetExtendedErrorText}
             };
 
             var tlvParser = new TlvParser(logger, tlvInfos);
@@ -135,6 +137,26 @@ namespace Portalum.Zvt.Parsers
                 }
             }
 
+            return true;
+        }
+
+        private bool SetExtendedErrorCode(byte[] data, IResponse response)
+        {
+            if (response is IResponseExtendedErrorCode typedResponse)
+            {
+                var number = BitConverter.ToUInt16(data, 0);
+                typedResponse.ExtendedErrorCode = number;
+            }
+            return true;
+        }
+
+        private bool SetExtendedErrorText(byte[] data, IResponse response)
+        {
+            if (response is IResponseExtendedErrorText typedResponse)
+            {
+                String text = System.Text.ASCIIEncoding.ASCII.GetString(data);
+                typedResponse.ExtendedErrorText = text;
+            }
             return true;
         }
 

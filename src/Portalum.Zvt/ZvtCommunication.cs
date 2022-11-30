@@ -79,10 +79,32 @@ namespace Portalum.Zvt
             this.ProcessData(data);
         }
 
+        private readonly object _dataBufferLockObject = new object();
         private void AddDataToBuffer(byte[] data)
         {
-            this._dataBuffer = data;
-            this._acknowledgeReceivedCancellationTokenSource?.Cancel();
+            lock (this._dataBufferLockObject) // Synchronise with access to _dataBuffer in SendCommandAsync
+            {
+                if (this._dataBuffer == null || this._dataBuffer.Length == 0)
+                {
+                    this._dataBuffer = data;
+                }
+                else
+                {
+                    byte[] buffer = new byte[this._dataBuffer.Length + data.Length];
+                    this._dataBuffer.CopyTo(buffer, 0);
+                    this._dataBuffer.CopyTo(buffer, this._dataBuffer.Length);
+                    this._dataBuffer = buffer;
+                }
+
+                try
+                {
+                    this._acknowledgeReceivedCancellationTokenSource?.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    this._logger.LogWarning($"{nameof(DataReceiveSwitch)} - TokenSource is already disposed");
+                }
+            }
         }
 
         private void ProcessData(byte[] data)
@@ -104,7 +126,7 @@ namespace Portalum.Zvt
         /// <returns></returns>
         public async Task<SendCommandResult> SendCommandAsync(
             byte[] commandData,
-            int acknowledgeReceiveTimeoutMilliseconds = 5000,
+            int acknowledgeReceiveTimeoutMilliseconds = 10000,
             CancellationToken cancellationToken = default)
         {
             this._acknowledgeReceivedCancellationTokenSource?.Dispose();
@@ -112,7 +134,12 @@ namespace Portalum.Zvt
 
             using var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this._acknowledgeReceivedCancellationTokenSource.Token);
 
-            this._waitForAcknowledge = true;
+            lock (this._dataBufferLockObject)
+            {
+                this._waitForAcknowledge = true;
+                this._dataBuffer = null; // Clear DataBuffer before sending new command
+            }
+
             try
             {
                 await this._deviceCommunication.SendAsync(commandData, linkedCancellationTokenSource.Token).ContinueWith(task => { });
@@ -136,30 +163,44 @@ namespace Portalum.Zvt
 
             this._acknowledgeReceivedCancellationTokenSource.Dispose();
 
-            if (this._dataBuffer == null)
+            lock (this._dataBufferLockObject) // Synchronise with AddDataToBuffer
             {
-                return SendCommandResult.NoDataReceived;
+                if (this._dataBuffer == null)
+                {
+                    return SendCommandResult.NoDataReceived;
+                }
+
+                if (this.CheckIsPositiveCompletion())
+                {
+                    this.ForwardUnusedBufferData();
+                    return SendCommandResult.PositiveCompletionReceived;
+                }
+                else
+                {
+                    if (commandData.Take(2).SequenceEqual(new byte[] { 0x06, 0x00 }))
+                    {
+                        if (_dataBuffer.Take(3).SequenceEqual(new byte[] { 0x06, 0x0f, 0xff }))
+                        {
+                            this.ProcessData(_dataBuffer);
+                            return SendCommandResult.PositiveCompletionReceived;
+                        }
+                    }
+                }
+
+                if (this.CheckIsNotSupported())
+                {
+                    return SendCommandResult.NotSupported;
+                }
+
+                if (this.CheckIsNegativeCompletion())
+                {
+                    this._logger.LogError($"{nameof(SendCommandAsync)} - 'Negative completion' received");
+                    return SendCommandResult.NegativeCompletionReceived;
+                }
+
+                this._logger.LogError($"{nameof(SendCommandAsync)} - 'Unknown Return: " + BitConverter.ToString(this._dataBuffer));
+                return SendCommandResult.UnknownFailure;
             }
-
-            if (this.CheckIsPositiveCompletion())
-            {
-                this.ForwardUnusedBufferData();
-
-                return SendCommandResult.PositiveCompletionReceived;
-            }
-
-            if (this.CheckIsNotSupported())
-            {
-                return SendCommandResult.NotSupported;
-            }
-
-            if (this.CheckIsNegativeCompletion())
-            {
-                this._logger.LogError($"{nameof(SendCommandAsync)} - 'Negative completion' received");
-                return SendCommandResult.NegativeCompletionReceived;
-            }
-
-            return SendCommandResult.UnknownFailure;
         }
 
         private bool CheckIsPositiveCompletion()
@@ -185,7 +226,7 @@ namespace Portalum.Zvt
             {
                 return true;
             }
-
+            
             return false;
         }
 
@@ -234,6 +275,7 @@ namespace Portalum.Zvt
 
             var unusedData = this._dataBuffer.AsSpan().Slice(3).ToArray();
             this.ProcessData(unusedData);
+            this._dataBuffer = null;
         }
     }
 }

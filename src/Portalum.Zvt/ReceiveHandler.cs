@@ -151,6 +151,7 @@ namespace Portalum.Zvt
                 {
                     this.ResetFragmentInfo();
                     this._logger.LogError($"{nameof(ProcessData)} - Apdu data part corrupt");
+                    this.AbortReceived?.Invoke("Apdu data part corrupt"); //SS 15.11.2022: Ergänzung zu Portalum um Abbruch Fehlerhaften Apdu Daten zu erreichen. Dies hatte am A77 Fehler behoben. Ich bin aber nicht ganz sicher, ob das eingebaute Verhalten immer korrekt ist.
                     return ProcessDataState.CannotProcess;
                 }
 

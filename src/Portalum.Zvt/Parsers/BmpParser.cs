@@ -512,6 +512,7 @@ namespace Portalum.Zvt.Parsers
             if (response is IResponseErrorMessage typedResponse)
             {
                 typedResponse.ErrorMessage = errorMessage;
+                typedResponse.ErrorCode = data[0];
                 return true;
             }
 

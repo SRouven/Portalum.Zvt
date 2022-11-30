@@ -356,8 +356,14 @@ namespace Portalum.Zvt
                 //package.Add(0x00); //TLV-Length
 
                 //Add TLV Container permit 06D3 (Card complete)
-                package.Add(0x06); //TLV Indicator
-                package.Add(0x06); //TLV Legnth
+                package.Add(0x06); //TLV Indicator 
+                byte TlVLength = 0x06;
+                if (registrationConfig.CharactersPerPrintline.HasValue )
+                {
+                    TlVLength += 3;
+                }
+
+                package.Add(TlVLength); //TLV Legnth
 
                 package.Add(0x26); //List of permitted ZVT-Commands
                 package.Add(0x04); //length
@@ -365,6 +371,13 @@ namespace Portalum.Zvt
                 package.Add(0x02); //length
                 package.Add(0x06); //06 first hex of print text block
                 package.Add(0xD3); //D3 second hex of print text block
+
+                if (registrationConfig.CharactersPerPrintline.HasValue)
+                {
+                    package.Add(0x12); //TLV Indicator 
+                    package.Add(0x01); //TLV Legnth
+                    package.AddRange(NumberHelper.IntToBcd(registrationConfig.CharactersPerPrintline.Value, 1)); //TLV Legnth
+                }
 
                 //TLV TAG
                 //10 - Number of columns and number of lines of the merchant-display

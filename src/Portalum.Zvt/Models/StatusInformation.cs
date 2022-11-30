@@ -22,9 +22,13 @@ namespace Portalum.Zvt.Models
         IResponseExpiryDate,
         IResponseCardSequenceNumber,
         IResponseTurnoverRecordNumber,
-        IResponseCardType
+        IResponseCardType,
+        IResponseExtendedErrorCode,
+        IResponseExtendedErrorText
     {
         public string ErrorMessage { get; set; }
+        public int ErrorCode { get; set; }
+        public string Integration { get; set; } = "ZVT";
         public int TerminalIdentifier { get; set; }
         public string AdditionalText { get; set; }
         public string CardName { get; set; }
@@ -45,5 +49,7 @@ namespace Portalum.Zvt.Models
         public int TurnoverRecordNumber { get; set; }
         public string CardType { get; set; }
         public byte CardTypeId { get; set; }
+        public int ExtendedErrorCode { get; set; }
+        public string ExtendedErrorText { get; set; }
     }
 }

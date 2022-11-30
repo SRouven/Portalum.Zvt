@@ -58,6 +58,11 @@ namespace Portalum.Zvt
         #endregion
 
         /// <summary>
+        /// The number of characters per line of the printer
+        /// </summary>
+        public int? CharactersPerPrintline = null;
+
+        /// <summary>
         /// Get config byte
         /// </summary>
         /// <returns></returns>

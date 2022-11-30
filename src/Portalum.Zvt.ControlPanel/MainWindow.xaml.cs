@@ -422,6 +422,16 @@ namespace Portalum.Zvt.ControlPanel
                 lines.Add($"CurrencyCode: {statusInformation.CurrencyCode}");
             }
 
+            if (statusInformation.ExtendedErrorCode > 0)
+            {
+                lines.Add($"ExtendedErrorCode: {statusInformation.ExtendedErrorCode}");
+            }
+
+            if (!String.IsNullOrEmpty(statusInformation.ExtendedErrorText))
+            {
+                lines.Add($"ExtendedErrorText: {statusInformation.ExtendedErrorText}");
+            }
+
             var outputInfo = new OutputInfo
             {
                 Title = "StatusInformation",

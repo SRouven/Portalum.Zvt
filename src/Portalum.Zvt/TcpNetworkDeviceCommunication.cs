@@ -152,7 +152,7 @@ namespace Portalum.Zvt
         {
             try
             {
-                this._logger.LogInformation($"{nameof(ConnectAsync)}");
+                this._logger.LogInformation($"{nameof(ConnectAsync)} - IpAddress:{this._ipAddress}, Port:{this._port}");
 
                 return await this._tcpClient.ConnectAsync(this._ipAddress, this._port, cancellationToken);
             }
@@ -202,14 +202,23 @@ namespace Portalum.Zvt
         }
 
         /// <inheritdoc />
-        public async Task SendAsync(
+        public async Task<bool> SendAsync(
             byte[] data,
             CancellationToken cancellationToken = default)
         {
             this.DataSent?.Invoke(data);
 
             this._logger.LogDebug($"{nameof(SendAsync)} - {BitConverter.ToString(data)}");
-            await this._tcpClient.SendAsync(data, cancellationToken);
+            try
+            {
+                await this._tcpClient.SendAsync(data, cancellationToken);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                this._logger.LogError(exception, $"{nameof(SendAsync)}");
+                return false;
+            }
         }
     }
 }

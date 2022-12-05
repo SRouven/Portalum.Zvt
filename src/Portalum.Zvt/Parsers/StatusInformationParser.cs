@@ -47,6 +47,7 @@ namespace Portalum.Zvt.Parsers
                 new TlvInfo { Tag = "1F2B", Description = "Trace number (long format)", TryProcess = this.SetTraceNumberLongFormat },
                 new TlvInfo { Tag = "1F16", Description = "extended error code", TryProcess = SetExtendedErrorCode},
                 new TlvInfo { Tag = "1F17", Description = "extended error text", TryProcess = SetExtendedErrorText}
+                new TlvInfo { Tag = "43", Description = "Application Id", TryProcess = this.SetApplicationId },                
             };
 
             var tlvParser = new TlvParser(logger, tlvInfos);
@@ -66,6 +67,16 @@ namespace Portalum.Zvt.Parsers
             }
 
             return statusInformation;
+        }
+
+        private bool SetApplicationId(byte[] data, IResponse response)
+        {
+            if (response is IResponseApplicationId typedResponse)
+            {
+                typedResponse.ApplicationId = ByteHelper.ByteArrayToHex(data).ToUpper();
+                return true;
+            }
+            return false;
         }
 
         private bool SetCardholderAuthentication(byte[] data, IResponse response)

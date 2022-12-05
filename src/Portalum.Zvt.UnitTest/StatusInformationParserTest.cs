@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 using Portalum.Zvt.Helpers;
 using Portalum.Zvt.Parsers;
 using Portalum.Zvt.Repositories;
@@ -31,6 +33,7 @@ namespace Portalum.Zvt.UnitTest
             var statusInformation = statusInformationParser.Parse(data);
 
             Assert.AreEqual("Abbruch durch Kunde", statusInformation.AdditionalText);
+            Assert.AreEqual(0x6C, statusInformation.ErrorCode);
             Assert.AreEqual("abort via timeout or abort-key", statusInformation.ErrorMessage);
             Assert.AreEqual(28004869, statusInformation.TerminalIdentifier);
         }
@@ -47,6 +50,7 @@ namespace Portalum.Zvt.UnitTest
             var statusInformation = statusInformationParser.Parse(data);
 
             Assert.AreEqual("Betrag falsch", statusInformation.AdditionalText);
+            Assert.AreEqual(0xFF, statusInformation.ErrorCode);
             Assert.AreEqual("system error (= other/unknown error), See TLV tags 1F16 and 1F17", statusInformation.ErrorMessage);
             Assert.AreEqual(28004869, statusInformation.TerminalIdentifier);
         }
@@ -73,6 +77,7 @@ namespace Portalum.Zvt.UnitTest
             Assert.AreEqual(1, statusInformation.CardSequenceNumber);
             Assert.AreEqual(new TimeSpan(22, 39, 53), statusInformation.Time);
             Assert.AreEqual(28004869, statusInformation.TerminalIdentifier);
+            Assert.AreEqual("************4771", statusInformation.CardNumber);
         }
 
         [TestMethod]
@@ -126,8 +131,12 @@ namespace Portalum.Zvt.UnitTest
             Assert.AreEqual("MASTERCARD", statusInformation.CardName);
             Assert.AreEqual(6, statusInformation.TerminalIdentifier);
             Assert.AreEqual("no error", statusInformation.ErrorMessage);
+            Assert.AreEqual(0, statusInformation.ErrorCode);
             Assert.AreEqual("NFC", statusInformation.CardTechnology);
             Assert.AreEqual("No Cardholder authentication", statusInformation.CardholderAuthentication);
+            Assert.AreEqual(29, statusInformation.DateDay);
+            Assert.AreEqual(10, statusInformation.DateMonth);
+            Assert.AreEqual("A0000000041010", statusInformation.ApplicationId);
         }
 
         [TestMethod]
@@ -145,8 +154,31 @@ namespace Portalum.Zvt.UnitTest
             Assert.AreEqual("MASTERCARD", statusInformation.CardName);
             Assert.AreEqual(6, statusInformation.TerminalIdentifier);
             Assert.AreEqual("no error", statusInformation.ErrorMessage);
+            Assert.AreEqual(0, statusInformation.ErrorCode);
             Assert.AreEqual("Chip", statusInformation.CardTechnology);
             Assert.AreEqual("Offline encrypted Pin", statusInformation.CardholderAuthentication);
+            Assert.AreEqual("A0000000041010", statusInformation.ApplicationId);
+        }
+
+        [TestMethod]
+        public void Parse_AbortViaTimeout_Successful()
+        {
+            var dataHex = "04-0F-44-27-6C-04-00-00-00-00-12-00-49-09-78-0C-11-33-39-0D-08-17-22-F0-F0-0B-00-00-00-19-60-29-52-50-02-95-8B-F0-F1-00";
+            var byteData = ByteHelper.HexToByteArray(dataHex);
+
+            var apduInfo = ApduHelper.GetApduInfo(byteData);
+            var data = byteData.AsSpan().Slice(apduInfo.DataStartIndex);
+
+            var statusInformationParser = this.GetStatusInformationParser();
+            var statusInformation = statusInformationParser.Parse(data);
+
+            Assert.AreEqual("abort via timeout or abort-key", statusInformation.ErrorMessage);
+            Assert.AreEqual(0x6C, statusInformation.ErrorCode);
+            Assert.AreEqual(52500295, statusInformation.TerminalIdentifier);
+            Assert.AreEqual(12, statusInformation.Amount);
+            Assert.AreEqual(978, statusInformation.CurrencyCode);
+            Assert.AreEqual(17, statusInformation.DateDay);
+            Assert.AreEqual(8, statusInformation.DateMonth);
         }
     }
 }

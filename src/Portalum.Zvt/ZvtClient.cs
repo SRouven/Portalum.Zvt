@@ -299,7 +299,7 @@ namespace Portalum.Zvt
             {
                 commandResponse.State = CommandResponseState.Successful;
                 commandResponse.CompletionBytes = CompletionBytes;
-                dataReceivcedCancellationTokenSource.Cancel();
+                dataReceivedCancellationTokenSource.Cancel();                
             }
 
             void abortReceived(string errorMessage)

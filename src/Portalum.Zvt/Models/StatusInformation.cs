@@ -52,8 +52,7 @@ namespace Portalum.Zvt.Models
         public string AidAuthorisationAttribute { get; set; }
         public int ExpiryDateYear { get; set; }
         public int ExpiryDateMonth { get; set; }
-        public int TurnoverRecordNumber { get; set; }
-        public string CardType { get; set; }
+        public int TurnoverRecordNumber { get; set; }       
         public byte CardTypeId { get; set; }
         public int ExtendedErrorCode { get; set; }
         public string ExtendedErrorText { get; set; }

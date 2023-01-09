@@ -46,7 +46,7 @@ namespace Portalum.Zvt.Parsers
                 new TlvInfo { Tag = "60", Description = "Application", TryProcess = null },
                 new TlvInfo { Tag = "1F2B", Description = "Trace number (long format)", TryProcess = this.SetTraceNumberLongFormat },
                 new TlvInfo { Tag = "1F16", Description = "extended error code", TryProcess = SetExtendedErrorCode},
-                new TlvInfo { Tag = "1F17", Description = "extended error text", TryProcess = SetExtendedErrorText}
+                new TlvInfo { Tag = "1F17", Description = "extended error text", TryProcess = SetExtendedErrorText},
                 new TlvInfo { Tag = "43", Description = "Application Id", TryProcess = this.SetApplicationId },                
             };
 

@@ -138,7 +138,6 @@ namespace Portalum.Zvt
             }
         }
 
-        private void ProcessData(byte[] data)
         /// <summary>
         /// Process received data and respond according to the ZVT protocol and / or the current state
         /// This method acts as the responder on the zvt protocol level. If you need to respond differently

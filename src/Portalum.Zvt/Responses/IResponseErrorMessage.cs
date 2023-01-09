@@ -3,6 +3,6 @@
     public interface IResponseErrorMessage
     {
         string ErrorMessage { get; set; }
-        int ErrorCode { get; set; }
+        byte ErrorCode { get; set; }
     }
 }

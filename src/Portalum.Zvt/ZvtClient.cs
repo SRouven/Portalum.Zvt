@@ -159,6 +159,10 @@ namespace Portalum.Zvt
             return this.CompletionDecisionRequested?.Invoke();
         }
 
+        public ZvtClientConfig clientConfig()
+        {
+            return (ZvtClientConfig)this._clientConfig;
+        }
         private Encoding GetEncoding(ZvtEncoding zvtEncoding)
         {
             switch (zvtEncoding)
@@ -411,7 +415,8 @@ namespace Portalum.Zvt
 
             //Currency Code (CC)
             //ISO4217 (https://en.wikipedia.org/wiki/ISO_4217)
-            var currencyNumericCodeData = NumberHelper.IntToBcd(978, 2); //978 = Euro
+            int ccNumeric = registrationConfig.CurrencyCode ?? 978; //978 = Euro
+            var currencyNumericCodeData = NumberHelper.IntToBcd(ccNumeric, 2); 
             package.AddRange(currencyNumericCodeData);
 
             //Service byte
@@ -431,6 +436,10 @@ namespace Portalum.Zvt
                 {
                     TlVLength += 3;
                 }
+                if (registrationConfig.RequestedEncoding.HasValue )
+                {
+                    TlVLength += 3;
+                }
 
                 package.Add(TlVLength); //TLV Legnth
 
@@ -446,6 +455,13 @@ namespace Portalum.Zvt
                     package.Add(0x12); //TLV Indicator 
                     package.Add(0x01); //TLV Legnth
                     package.AddRange(NumberHelper.IntToBcd(registrationConfig.CharactersPerPrintline.Value, 1)); //TLV Legnth
+                }
+
+                if (registrationConfig.RequestedEncoding.HasValue)
+                {
+                    package.Add(0x14); //TLV Indicator (14 - ISO-Character set)
+                    package.Add(0x01); //TLV Legnth
+                    package.Add(registrationConfig.GetEncodeingByte());
                 }
 
                 //TLV TAG

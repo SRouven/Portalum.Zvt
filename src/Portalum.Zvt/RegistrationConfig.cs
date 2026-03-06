@@ -70,6 +70,17 @@ namespace Portalum.Zvt
         public int? CharactersPerPrintline = null;
 
         /// <summary>
+        /// Encodeing to request from Terminal during init
+        /// </summary>
+        public ZvtEncoding? RequestedEncoding = null;
+
+        /// <summary>
+        /// Numeric Currency Code (CC) ISO4217 (https://en.wikipedia.org/wiki/ISO_4217)
+        /// </summary>
+        public int? CurrencyCode = null;
+                
+
+        /// <summary>
         /// Get config byte
         /// </summary>
         /// <returns></returns>
@@ -121,6 +132,31 @@ namespace Portalum.Zvt
             }
 
             return serviceByte;
+        }
+
+        /// <summary>
+        /// Get byte code for encodeing
+        /// </summary>
+        /// <returns></returns>
+        public byte GetEncodeingByte()
+        {
+            if (!this.RequestedEncoding.HasValue)
+                return 0xFE;
+
+            switch (this.RequestedEncoding)
+            {
+                case ZvtEncoding.UTF8:
+                    return 0xFE;
+                case ZvtEncoding.ISO_8859_1:
+                    return 0x01;
+                case ZvtEncoding.ISO_8859_2:
+                    return 0x02;
+                case ZvtEncoding.ISO_8859_15:
+                    return 0x0F;
+                case ZvtEncoding.CodePage437:
+                default:
+                    return 0xFE;
+            }
         }
     }
 }
